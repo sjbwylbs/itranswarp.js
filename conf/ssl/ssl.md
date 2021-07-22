@@ -1,9 +1,5 @@
 # Linux通过Nginx配置SSL实现服务器/客户端双向认证（详细）
 
-    修改自
-    本文为CSDN博主「王绍桦」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。·
-    原文链接：https://blog.csdn.net/rexueqingchun/article/details/822515631.下载tar.gz格式#
-
 1. 下载tar.gz格式jdk并配置环境变量（已配置jdk环境的可以忽略第一步）
 
    1.1 解压jdk压缩包到opt目录下：
@@ -348,4 +344,106 @@ sudo openssl pkcs12 -export -clcerts -in /etc/nginx/ca/users/client.crt -inkey /
 ```
 
   生成后把.p12格式的证书拷贝到windows系统上安装，重启浏览器访问https请求，例如：https://192.168.1.220:443，选择刚安装的证书，能显示tomcat或者应用首页则安装成功。
-  
+
+————————————————
+版权声明：本文为CSDN博主「王绍桦」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/rexueqingchun/article/details/822515631.下载tar.gz格式
+
+will PEM converted to CRT (.CRT file)
+
+```shell
+openssl x509 -outform der -in certificate.pem -out certificate.crt
+```
+
+will DER file(.crt .cer .der) converted to PEM
+
+```shell
+openssl x509 -inform der -in certificate.cer -out certificate.pem
+```
+
+will PEM Convert file to DER
+
+```shell
+openssl x509 -outform der -in certificate.pem -out certificate.der
+```
+
+will PEM Convert the certificate file and private key to PKCS＃12(.pfx .p12)
+
+```shell
+openssl pkcs12 -export -out certificate.pfx -inkey privateKey.key -in certificate.crt -certfile CACert.crt
+```
+
+Will contain the private key and certificate PKCS＃12 file(.pfx .p12) converted to PEM
+
+```shell
+openssl pkcs12 -in keyStore.pfx -out keyStore.pem -nodes
+```
+
+   You can add -nocerts to only output the private key or add -nokeys to only output the certificates.
+
+Will contain the private key and certificate PKCS＃12 file(.pfx .p12) converted to PEM
+
+```shell
+openssl pkcs12 -in keyStore.pfx -out keyStore.pem -nodes
+```
+
+## OpenSSL conversion PEM
+
+1. will PEM Convert to P7B
+
+```shell
+openssl crl2pkcs7 -nocrl -certfile certificate.cer -out certificate.p7b -certfile CACert.cer
+```
+
+1. will PEM Convert to PFX
+
+```shell
+openssl pkcs12 -export -out certificate.pfx -inkey privateKey.key -in certificate.crt -certfile CACert.crt
+```
+
+   will P7B Convert to PEM
+
+```shell
+openssl pkcs7 -print_certs -in certificate.p7b -out certificate.cer
+```
+
+   will P7B Convert to PFX
+
+```shell
+openssl pkcs7 -print_certs -in certificate.p7b -out certificate.cer
+openssl pkcs12 -export -in certificate.cer -inkey privateKey.key -out certificate.pfx -certfile CACert.cer
+```
+
+   will PFX Convert to PEM
+
+```shell
+openssl pkcs12 -in certificate.pfx -out certificate.cer -nodes
+```
+
+OpenSSL generate rsa Key
+
+by OpenSSL generate rsa Key
+
+   Use on the command lineOpenSSLFirst, you need to generate the public and private keys, which should be used.-passoutThe parameter password protects this file. This parameter can be used in many different forms. See alsoOpenSSLDocumentation.
+
+```shell
+openssl genrsa -out private.pem 1024
+```
+
+   This will create a key file called private.pem that uses 1024 bits. The file actually has both a private key and a public key from which the public key can be extracted:
+
+openssl rsa -in private.pem -out public.pem -outform PEM -pubout
+
+    1
+
+or
+```shell
+openssl rsa -in private.pem -pubout > public.pem
+
+    1
+
+or
+```shell
+openssl rsa -in private.pem -pubout -out public.pem
+
+
