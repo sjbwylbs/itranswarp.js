@@ -447,3 +447,110 @@ or
 openssl rsa -in private.pem -pubout -out public.pem
 
 以上来自https://www.programmersought.com/article/695128881/
+
+
+
+## 我从注册商处收到了一个.crt文件和一个.pem文件，但是我需要将其转换为密钥库（JKS）才能在服务器上使用它。
+
+如何转换文件？
+
+最佳答案
+
+您无需将.crt或.pem文件转换为KeyStore，必须将它们添加到KeyStore。
+
+您可以通过运行以下命令使用keytool添加它们：
+
+keytool -importcert -keystore <KEYSTORE.JKS> -storepass <KEYSTORE_PASSWORD> -file <YOUR_CERT_OR_PEM_FILE> -alias <ALIAS_NAME>
+
+
+
+如果该位置不存在该密钥库，则会创建一个密钥库，然后将证书添加到其中，或者如果密钥库存在，则将证书添加到其中。
+
+然后，您可以通过运行以下命令查看是否实际添加了证书：
+
+keytool -list -keystore <YOUR_KEYSTORE> -storepass <KEYSTORE_PASSWORD> -alias <ALIAS_NAME> -v
+
+## 不同格式证书导入keystore方法
+
+简介
+
+Java自带的keytool工具是个密钥和证书管理工具。它使用户能够管理自己的公钥/私钥对及相关证书，用于（通过数字签名）自我认证（用户向别的用户/服务认证自己）或数据完整性以及认证服务。它还允许用户储存他们的通信对等者的公钥（以证书形式）。
+
+keytool 将密钥和证书储存在一个所谓的密钥仓库（keystore）中。缺省的密钥仓库实现将密钥仓库实现为一个文件。它用口令来保护私钥。
+Java KeyStore的类型
+
+JKS和JCEKS是Java密钥库(KeyStore)的两种比较常见类型(我所知道的共有5种，JKS, JCEKS, PKCS12, BKS，UBER)。
+
+JKS的Provider是SUN，在每个版本的JDK中都有，JCEKS的Provider是SUNJCE，1.4后我们都能够直接使用它。
+
+JCEKS在安全级别上要比JKS强，使用的Provider是JCEKS(推荐)，尤其在保护KeyStore中的私钥上（使用TripleDes）。
+
+PKCS#12是公钥加密标准，它规定了可包含所有私钥、公钥和证书。其以二进制格式存储，也称为 PFX 文件，在windows中可以直接导入到密钥区，注意，PKCS#12的密钥库保护密码同时也用于保护Key。
+
+BKS 来自BouncyCastle Provider，它使用的也是TripleDES来保护密钥库中的Key，它能够防止证书库被不小心修改（Keystore的keyentry改掉1个 bit都会产生错误），BKS能够跟JKS互操作，读者可以用Keytool去TryTry。
+
+UBER比较特别，当密码是通过命令行提供的时候，它只能跟keytool交互。整个keystore是通过PBE/SHA1/Twofish加密，因此keystore能够防止被误改、察看以及校验。以前，Sun JDK(提供者为SUN)允许你在不提供密码的情况下直接加载一个Keystore，类似cacerts，UBER不允许这种情况。
+ 
+证书导入
+
+Der/Cer证书导入：
+
+要从某个文件中导入某个证书，使用keytool工具的-import命令：
+
+keytool -import -file mycert.der -keystore mykeystore.jks
+
+如果在 -keystore 选项中指定了一个并不存在的密钥仓库，则该密钥仓库将被创建。
+
+如果不指定 -keystore 选项，则缺省密钥仓库将是宿主目录中名为 .keystore 的文件。如果该文件并不存在，则它将被创建。
+
+创建密钥仓库时会要求输入访问口令，以后需要使用此口令来访问。可使用-list命令来查看密钥仓库里的内容：
+
+keytool -list -rfc -keystore mykeystore.jks
+
+
+P12格式证书导入：
+
+keytool无法直接导入PKCS12文件。
+
+第一种方法是使用IE将pfx证书导入，再导出为cert格式文件。使用上面介绍的方法将其导入到密钥仓库中。这样的话仓库里面只包含了证书信息，没有私钥内容。
+
+第二种方法是将pfx文件导入到IE浏览器中，再导出为pfx文件。
+       新生成的pfx不能被导入到keystore中，报错：keytool错误： java.lang.Exception: 所输入的不是一个 X.509 认证。新生成的pfx文件可以被当作keystore使用。但会报个错误as unknown attr1.3.6.1.4.1.311.17.1,查了下资料,说IE导出的就会这样,使用Netscape就不会有这个错误.
+
+第三种方法是将pfx文件当作一个keystore使用。但是通过微软的证书管理控制台生成的pfx文件不能直接使用。keytool不认此格式，报keytool错误： java.io.IOException: failed to decrypt safe contents entry。需要通过OpenSSL转换一下：
+
+1）openssl pkcs12 -in mycerts.pfx -out mycerts.pem
+
+2）openssl pkcs12 -export -in mycerts.pem -out mykeystore.p12
+
+通过keytool的-list命令可检查下密钥仓库中的内容：
+
+keytool -rfc -list -keystore mykeystore.p12 -storetype pkcs12
+
+这里需要指明仓库类型为pkcs12，因为缺省的类型为jks。这样此密钥仓库就即包含证书信息也包含私钥信息。
+
+P7B格式证书导入：
+
+keytool无法直接导入p7b文件。
+
+需要将证书链RootServer.p7b（包含根证书）导出为根rootca.cer和子rootcaserver.cer 。
+
+将这两个证书导入到可信任的密钥仓库中。
+
+keytool -import -alias rootca -trustcacerts -file rootca.cer -keystore testkeytrust.jks
+
+遇到是否信任该证书提示时，输入y
+
+keytool -import -alias rootcaserver -trustcacerts -file rootcaserver.cer -keystore testkeytrust.jks
+
+
+总结:
+
+1)P12格式的证书是不能使用keytool工具导入到keystore中的
+
+2)The Sun's PKCS12 Keystore对从IE和其他的windows程序生成的pfx格式的证书支持不太好.
+
+3)P7B证书链不能直接导入到keystore，需要将里面的证书导出成cer格式，再分别导入到keystore。
+————————————————
+版权声明：本文为CSDN博主「peterwanghao」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/peterwanghao/article/details/1761728
