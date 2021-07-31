@@ -4,7 +4,7 @@
 
 ```shell
 keytool -genkey -v -alias tomcat -keyalg RSA -keystore tomcat.keystore -validity 36500
-keytool -importkeystore -srckeystore tomcat.keystore -destkeystore tomcat.keystore -deststoretype pkcs12
+keytool -importkeystore -srckeystore tomcat.keystore -destkeystore tomcat.p12 -deststoretype pkcs12
 ```
 
 2. 为客户端生成证书
