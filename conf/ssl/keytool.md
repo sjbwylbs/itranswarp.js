@@ -4,24 +4,25 @@
 
 ```shell
 keytool -genkey -v -alias tomcat -keyalg RSA -keystore tomcat.keystore -validity 36500
+keytool -importkeystore -srckeystore tomcat.keystore -destkeystore tomcat.keystore -deststoretype pkcs12
 ```
 
 2. 为客户端生成证书
 
 ```shell
-keytool -genkey -v -alias mykey -keyalg RSA -storetype PKCS12 -keystore mykey.p12
+keytool -genkey -v -alias client -keyalg RSA -storetype PKCS12 -keystore client.p12
 ```
 
 3. 让服务器信任客户端证书
 
 ```shell
-keytool -export -alias mykey -keystore mykey.p12 -storetype PKCS12 -storepass 密码 -rfc -file mykey.cer
+keytool -export -alias client -keystore client.p12 -storetype PKCS12 -storepass 密码 -rfc -file client.cer
 ```
 
     导入证书
 
 ```shell
-keytool -import -v -file mykey.cer -keystore tomcat.keystore
+keytool -import -v -file client.cer -keystore tomcat.keystore
 ```
 
 4. 让客户端信任服务器证书
