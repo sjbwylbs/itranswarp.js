@@ -34,11 +34,27 @@ keytool -keystore tomcat.p12 -export -alias tomcat -file tomcat.cer
 5. 配置Tomcat服务器
 
 
-```shell
+```xml
 <Connector port="8080" protocol="HTTP/1.1" connectionTimeout="20000" redirectPort="443" />
 
 
 <Connector port="443" protocol="HTTP/1.1" SSLEnabled="true"
                maxThreads="150" scheme="https" secure="true"
                clientAuth="false" sslProtocol="TLS" keystoreFile="tomcat.keystore" keystorePass="密码"/>
+```
+
+```xml
+# spring boot config
+server.port=8443
+server.ssl.key-store=classpath:ssl/tomcat.p12
+server.ssl.key-store-password=PASSWORD
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=tomcat
+# if not need client auth please comment below.
+server.ssl.client-auth=need
+server.ssl.trust-store=classpath:ssl/tomcat.p12
+server.ssl.trust-store-password=PASSWORD
+server.ssl.trust-store-type=PKCS12
+server.ssl.trust-store-provider=SUN
+
 ```
