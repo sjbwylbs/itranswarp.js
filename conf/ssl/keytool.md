@@ -22,13 +22,13 @@ keytool -export -alias client -keystore client.p12 -storetype PKCS12 -storepass 
     导入证书
 
 ```shell
-keytool -import -v -file client.cer -keystore tomcat.keystore
+keytool -import -v -file client.cer -keystore tomcat.p12
 ```
 
 4. 让客户端信任服务器证书
 
 ```shell
-keytool -keystore tomcat.keystore -export -alias tomcat -file tomcat.cer
+keytool -keystore tomcat.p12 -export -alias tomcat -file tomcat.cer
 ```
 
 5. 配置Tomcat服务器
