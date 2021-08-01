@@ -5,6 +5,9 @@
 ```shell
 keytool -genkey -v -alias tomcat -keyalg RSA -keystore tomcat.keystore -validity 36500
 keytool -importkeystore -srckeystore tomcat.keystore -destkeystore tomcat.p12 -deststoretype pkcs12
+# can replace with on line command is below:
+keytool -genkey -v -storetype PKCS12 -keystore tomcat.p12 -alias tomcat -keyalg RSA -keysize 2048 -validity 36500
+
 ```
 
 2. 为客户端生成证书
